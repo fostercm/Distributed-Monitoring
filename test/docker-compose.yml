@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:14.17
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST: ${DB_HOST}
+      POSTGRES_PORT: ${DB_PORT}
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+  scraper:
+    image: metis-scraper:latest
+    environment:
+      SCRAPER_HOST: ${SCRAPER_HOST}
+      SCRAPER_PORT: ${SCRAPER_PORT}
+      SCRAPER_INTERVAL: ${SCRAPER_INTERVAL}
+      SCRAPER_ENDPOINTS: ${SCRAPER_ENDPOINTS}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+    ports:
+      - "${SCRAPER_PORT}:${SCRAPER_PORT}"
+  
+volumes:
+  postgres_data:
