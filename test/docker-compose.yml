@@ -9,8 +9,6 @@ services:
       POSTGRES_PORT: ${DB_PORT}
     ports:
       - "${DB_PORT}:${DB_PORT}"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     
   scraper:
     image: metis-scraper:latest
@@ -26,6 +24,3 @@ services:
       DB_PORT: ${DB_PORT}
     ports:
       - "${SCRAPER_PORT}:${SCRAPER_PORT}"
-  
-volumes:
-  postgres_data:
