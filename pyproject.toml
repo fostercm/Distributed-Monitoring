@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metis"
+version = "1.0"
+dependencies = ["psycopg2-binary", "requests", "pyyaml"]
+
+[project.scripts]
+metis = "metis.cli:main"
