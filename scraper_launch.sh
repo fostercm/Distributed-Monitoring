@@ -1,8 +1,8 @@
 #!/bin/bash
 
-cd containers/scraper
+cd containers/scraper/$1
 docker build -t scraper .
-cd ../dashboard
+cd ../../dashboard
 docker build -t dashboard .
 cd ../../test
 source startup.sh config.yml
