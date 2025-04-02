@@ -1,25 +1,17 @@
 services:
   db:
-    image: postgres:14.17
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_HOST: ${DB_HOST}
-      POSTGRES_PORT: ${DB_PORT}
+    image: redis:latest
     ports:
       - "${DB_PORT}:${DB_PORT}"
     
   scraper:
-    image: metis-scraper:latest
+    image: scraper:latest
     environment:
       SCRAPER_HOST: ${SCRAPER_HOST}
       SCRAPER_PORT: ${SCRAPER_PORT}
       SCRAPER_INTERVAL: ${SCRAPER_INTERVAL}
       SCRAPER_ENDPOINTS: ${SCRAPER_ENDPOINTS}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      SCRAPER_WINDOW_SIZE: ${SCRAPER_WINDOW_SIZE}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
     ports:
