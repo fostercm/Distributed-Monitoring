@@ -2,22 +2,19 @@ from redis import Redis
 import matplotlib.pyplot as plt
 import streamlit as st
 import pandas as pd
+import numpy as np
+import os
 import time
 
-# Connect to Redis
-r = Redis(host="localhost", port=6379, decode_responses=True)
-
+# Define helper functions
 def get_data(host, metric):
     # Check if the host is up
     if not get_status(host):
-        return []
+        return [np.nan] * window_size 
 
     # Fetch data from Redis
     data = r.lrange(f"metric:{metric}:host:{host}", 0, -1)
-    if data:
-        return [float(i) for i in data]
-    else:
-        return []
+    return [float(i) if float(i) != -1 else np.nan for i in data]
 
 def get_status(host):
     # Check if the host is up
@@ -30,10 +27,15 @@ def get_status(host):
 def remove_endpoint(host):
     return "/".join(host.split("/")[:-1])
 
-hosts = ["172.24.1.57:8001/metrics",
-         "172.24.1.57:8002/metrics",
-         "172.24.1.57:8003/metrics"]
-window_size = 10
+# Get environment variables
+db_host = os.environ.get("DB_HOST")
+db_port = os.environ.get("DB_PORT")
+hosts = os.environ.get("SCRAPER_ENDPOINTS").split(",")
+window_size = int(os.environ.get("DASHBOARD_WINDOW_SIZE"))
+interval = int(os.environ.get("DASHBOARD_INTERVAL"))
+
+# Connect to Redis
+r = Redis(host=db_host, port=db_port, decode_responses=True)
 
 # Streamlit UI
 st.title("Metrics Dashboard")
@@ -48,6 +50,7 @@ status_placeholder = st.sidebar.empty()
 chart_placeholder = st.empty()
 fig, ax = plt.subplots(2,2, figsize=(15, 10))
 
+# Define the metrics to be displayed
 metrics = [
     ("cpu_usage", "CPU Usage", "CPU Usage (%)"),
     ("memory_used", "Memory Used", "Memory Used (GB)"),
@@ -55,6 +58,7 @@ metrics = [
     ("latency", "Latency", "Latency (ms)")
 ]
 
+# Metrics update loop
 while True:
     
     # Update the status
@@ -66,6 +70,7 @@ while True:
         status_content += f"<b style='color:{color};'>{container} is {'Active' if status else 'Inactive'}</b><br>"
     status_placeholder.markdown(status_content, unsafe_allow_html=True)
     
+    # Update the metrics
     for i,(metric,title,ylabel) in enumerate(metrics):
     
         # Get new data
@@ -75,8 +80,8 @@ while True:
             data = get_data(host, metric)
             
             # Place the data in the DataFrame
-            if len(data) == window_size:
-                df[remove_endpoint(host)] = data
+            print(host, metric, data)
+            df[remove_endpoint(host)] = data
         
         # Plot the relevant data
         x, y = i//2, i%2
@@ -94,4 +99,5 @@ while True:
     # Plot the data
     chart_placeholder.pyplot(fig)
     
-    time.sleep(5)
+    # Sleep for the specified interval
+    time.sleep(interval)
