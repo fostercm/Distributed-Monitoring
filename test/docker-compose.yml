@@ -1,5 +1,5 @@
 services:
-  db:
+  redis:
     image: redis:latest
     ports:
       - "${DB_PORT}:${DB_PORT}"
@@ -16,3 +16,14 @@ services:
       DB_PORT: ${DB_PORT}
     ports:
       - "${SCRAPER_PORT}:${SCRAPER_PORT}"
+  
+  dashboard:
+    image: dashboard:latest
+    environment:
+      DASHBOARD_INTERVAL: ${DASHBOARD_INTERVAL}
+      DASHBOARD_WINDOW_SIZE: ${DASHBOARD_WINDOW_SIZE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      SCRAPER_ENDPOINTS: ${SCRAPER_ENDPOINTS}
+    ports:
+      - "${DASHBOARD_PORT}:${DASHBOARD_PORT}"
