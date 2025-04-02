@@ -56,6 +56,18 @@ else:
                 errors.append("Error: Invalid endpoint configuration, requires a list of strings")
                 break
 
+# Validate the dashboard configuration
+if "Dashboard" not in config:
+    errors.append("Error: 'Dashboard' field not found in the configuration file")
+
+else:
+    
+    # Validate fields in the dashboard configuration
+    dashboard = config["Dashboard"]
+    validate_field(dashboard, "Host", str, errors)
+    for field in ["Interval", "Port", "Window Size"]:
+        validate_field(dashboard, field, int, errors)
+        
 # Exit if errors are found
 if errors:
     for error in errors:
@@ -71,3 +83,7 @@ with open(".env", "w") as f:
     f.write(f"SCRAPER_PORT={scraper['Port']}\n")
     f.write(f"SCRAPER_HOST={scraper['Host']}\n")
     f.write(f"SCRAPER_WINDOW_SIZE={scraper['Window Size']}\n")
+    f.write(f"DASHBOARD_INTERVAL={dashboard['Interval']}\n")
+    f.write(f"DASHBOARD_PORT={dashboard['Port']}\n")
+    f.write(f"DASHBOARD_HOST={dashboard['Host']}\n")
+    f.write(f"DASHBOARD_WINDOW_SIZE={dashboard['Window Size']}\n")
