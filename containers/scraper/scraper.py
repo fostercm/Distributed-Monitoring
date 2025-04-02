@@ -12,7 +12,7 @@ async def get_metrics(host: str, session: aiohttp.ClientSession) -> dict:
     
     try:
         # Make the request
-        async with session.get(host) as response:
+        async with session.get(f"http://{host}") as response:
             response = await response.json()
     except:
         # Return the host and status
