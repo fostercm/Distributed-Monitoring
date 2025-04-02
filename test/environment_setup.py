@@ -33,8 +33,7 @@ else:
     
     # Validate fields in the database configuration
     database = config["Database"]
-    for field in ["Host", "User", "Password", "Name"]:
-        validate_field(database, field, str, errors)
+    validate_field(database, "Host", str, errors)
     validate_field(database, "Port", int, errors)
     
 # Validate the scraper configuration
@@ -47,7 +46,7 @@ else:
     scraper = config["Scraper"]
     validate_field(scraper, "Host", str, errors)
     validate_field(scraper, "Endpoints", list, errors)
-    for field in ["Interval", "Port"]:
+    for field in ["Interval", "Port", "Window Size"]:
         validate_field(scraper, field, int, errors)
     
     # Validate individual endpoints
@@ -67,10 +66,8 @@ if errors:
 with open(".env", "w") as f:
     f.write(f"DB_HOST={database['Host']}\n")
     f.write(f"DB_PORT={database['Port']}\n")
-    f.write(f"DB_USER={database['User']}\n")
-    f.write(f"DB_PASSWORD={database['Password']}\n")
-    f.write(f"DB_NAME={database['Name']}\n")
     f.write(f"SCRAPER_INTERVAL={scraper['Interval']}\n")
     f.write(f"SCRAPER_ENDPOINTS={','.join(scraper['Endpoints'])}\n")
     f.write(f"SCRAPER_PORT={scraper['Port']}\n")
     f.write(f"SCRAPER_HOST={scraper['Host']}\n")
+    f.write(f"SCRAPER_WINDOW_SIZE={scraper['Window Size']}\n")
