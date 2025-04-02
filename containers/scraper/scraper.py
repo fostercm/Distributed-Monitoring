@@ -41,16 +41,15 @@ def update_host_data(data: List[dict], window_size: int) -> None:
         if not host_data["status"]:
             # If the host is down, set the status to False
             redis.set(f"status:host:{host}", 0)
-            continue
-        
-        # If the host is up, set the status to True
-        redis.set(f"status:host:{host}", 1)
+        else:
+            # If the host is up, set the status to True
+            redis.set(f"status:host:{host}", 1)
         
         # Loop through each metric
         for metric in ['cpu_usage', 'memory_available', 'memory_used', 'disk_available', 'disk_used', 'latency']:
             
             # Store the metric in Redis
-            redis.rpush(f"metric:{metric}:host:{host}", host_data[metric])
+            redis.rpush(f"metric:{metric}:host:{host}", host_data[metric] if host_data["status"] else -1)
             
             # Keep only the recent values
             if redis.llen(f"metric:{metric}:host:{host}") > window_size:
