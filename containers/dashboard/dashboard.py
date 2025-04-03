@@ -80,7 +80,6 @@ while True:
             data = get_data(host, metric)
             
             # Place the data in the DataFrame
-            print(host, metric, data)
             df[remove_endpoint(host)] = data
         
         # Plot the relevant data
