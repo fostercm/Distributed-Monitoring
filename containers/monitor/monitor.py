@@ -24,7 +24,7 @@ def get_disk_io(stats: dict) -> dict:
     return {'disk_read': disk_read / 1e6, 'disk_write': disk_write / 1e6}
 
 def get_cpu_stats(stats: dict) -> dict:
-    """Extract CPU stats (ns, %) from container stats."""
+    """Extract CPU stats (ms, %) from container stats."""
     cpu_delta = stats['cpu_stats']['cpu_usage']['total_usage'] - stats['precpu_stats']['cpu_usage']['total_usage']
     system_delta = stats['cpu_stats']['system_cpu_usage'] - stats['precpu_stats']['system_cpu_usage']
     cpu_percent = (cpu_delta / system_delta) * len(stats['cpu_stats']['cpu_usage']['percpu_usage']) * 100
