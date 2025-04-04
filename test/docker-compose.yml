@@ -7,23 +7,18 @@ services:
   scraper:
     image: scraper:latest
     environment:
-      SCRAPER_HOST: ${SCRAPER_HOST}
-      SCRAPER_PORT: ${SCRAPER_PORT}
-      SCRAPER_INTERVAL: ${SCRAPER_INTERVAL}
-      SCRAPER_ENDPOINTS: ${SCRAPER_ENDPOINTS}
-      SCRAPER_WINDOW_SIZE: ${SCRAPER_WINDOW_SIZE}
-      DB_HOST: ${DB_HOST}
+      INTERVAL: ${INTERVAL}
+      ENDPOINTS: ${ENDPOINTS}
+      WINDOW_SIZE: ${WINDOW_SIZE}
       DB_PORT: ${DB_PORT}
-    ports:
-      - "${SCRAPER_PORT}:${SCRAPER_PORT}"
+      HOST: ${HOST}
   
   dashboard:
     image: dashboard:latest
     environment:
-      DASHBOARD_INTERVAL: ${DASHBOARD_INTERVAL}
-      DASHBOARD_WINDOW_SIZE: ${DASHBOARD_WINDOW_SIZE}
-      DB_HOST: ${DB_HOST}
+      INTERVAL: ${INTERVAL}
+      ENDPOINTS: ${ENDPOINTS}
+      WINDOW_SIZE: ${WINDOW_SIZE}
       DB_PORT: ${DB_PORT}
-      SCRAPER_ENDPOINTS: ${SCRAPER_ENDPOINTS}
     ports:
-      - "${DASHBOARD_PORT}:${DASHBOARD_PORT}"
+      - "${DASHBOARD_PORT}:8501"
