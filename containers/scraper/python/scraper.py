@@ -5,6 +5,7 @@ from time import perf_counter
 from typing import List, Dict
 from redis.asyncio import Redis as AsyncRedis
 from itertools import product
+import json
 
 async def write_to_redis(redis: AsyncRedis, metric: str, host: str, container_name: str, value: str, window_size: int) -> None:
     
@@ -80,24 +81,24 @@ async def scraper_loop(montor_dicts: Dict[str,List[str]], interval: int, window_
                 await asyncio.sleep(remaining_time)
 
 # Connect to Redis
-# redis = AsyncRedis(url=f"redis://{os.environ.get("DB_HOST")}:{os.environ.get("DB_PORT")} decode_responses=True)
-redis = AsyncRedis.from_url(url="redis://localhost:6379", decode_responses=True)
+redis = AsyncRedis.from_url(url=f"redis://{os.environ.get("HOST")}:{os.environ.get("DB_PORT")}", decode_responses=True)
+# redis = AsyncRedis.from_url(url="redis://localhost:6379", decode_responses=True)
 
 # Run the scraper
-# asyncio.run(
-#     scraper_loop(
-#         os.environ.get("SCRAPER_ENDPOINTS").split(","),
-#         int(os.environ.get("SCRAPER_INTERVAL")),
-#         int(os.environ.get("SCRAPER_WINDOW_SIZE"))
-#     )
-# )
-
 asyncio.run(
     scraper_loop(
-        {
-            "localhost:8080": ["endpoint8001", "endpoint8002"],
-        },
-        5,
-        10
+        json.loads(os.environ.get("ENDPOINTS")),
+        int(os.environ.get("INTERVAL")),
+        int(os.environ.get("WINDOW_SIZE"))
     )
 )
+
+# asyncio.run(
+#     scraper_loop(
+#         {
+#             "localhost:8080": ["endpoint8001", "endpoint8002"],
+#         },
+#         5,
+#         10
+#     )
+# )
