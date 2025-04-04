@@ -2,60 +2,61 @@ import aiohttp
 import asyncio
 import os
 from time import perf_counter
-from typing import List
-from redis import Redis
+from typing import List, Dict
+from redis.asyncio import Redis as AsyncRedis
+from itertools import product
 
-async def get_metrics(host: str, session: aiohttp.ClientSession) -> dict:
+async def write_to_redis(redis: AsyncRedis, metric: str, host: str, container_name: str, value: str, window_size: int) -> None:
     
-    # Start the timer
-    start_time = perf_counter()
+    # Store the metric in Redis
+    await redis.rpush(f"metric:{metric}:host:{host}:container:{container_name}", value)
+    
+    # Keep only the recent values
+    if await redis.llen(f"metric:{metric}:host:{host}:container:{container_name}") > window_size:
+        await redis.lpop(f"metric:{metric}:host:{host}:container:{container_name}")
+
+async def scrape_container_metrics(monitor_host: str, container_names: List[str], window_size: int, session: aiohttp.ClientSession) -> dict:
     
     try:
         # Make the request
-        async with session.get(f"http://{host}") as response:
+        async with session.get(f"http://{monitor_host}/metrics", params={'container_names' : container_names}) as response:
             response = await response.json()
+        
     except:
-        # Return the host and status
-        return {
-            "host": host,
-            "status": False
+        # If the request fails, flag all containers as down
+        response = {
+            container : {
+                "cpu_absolute_usage": -1,
+                "cpu_percent_usage": -1,
+                "memory_absolute_usage": -1,
+                "memory_percent_usage": -1,
+                "network_input": -1,
+                "network_output": -1,
+                "disk_read": -1,
+                "disk_write": -1
+            } for container in container_names
         }
     
-    # End the timer
-    end_time = perf_counter()
-    
-    # Add the host, latency, and status to the response
-    response["host"] = host
-    response["latency"] = end_time - start_time
-    response["status"] = True
-    
-    # Return the response
-    return response
+    # Execute the write tasks concurrently
+    write_tasks = [write_to_redis(redis,
+                                  metric,
+                                  monitor_host,
+                                  container_name,
+                                  response[container_name][metric],
+                                  window_size
+                                ) for container_name, metric in product(
+                                    container_names, ['cpu_absolute_usage', 
+                                                      'cpu_percent_usage', 
+                                                      'memory_absolute_usage', 
+                                                      'memory_percent_usage', 
+                                                      'network_input', 
+                                                      'network_output', 
+                                                      'disk_read', 
+                                                      'disk_write'])
+                ]
+    await asyncio.gather(*write_tasks)
 
-def update_host_data(data: List[dict], window_size: int) -> None:
-    
-    for host_data in data:
-        # Get the host
-        host = host_data["host"]
-        
-        if not host_data["status"]:
-            # If the host is down, set the status to False
-            redis.set(f"status:host:{host}", 0)
-        else:
-            # If the host is up, set the status to True
-            redis.set(f"status:host:{host}", 1)
-        
-        # Loop through each metric
-        for metric in ['cpu_usage', 'memory_available', 'memory_used', 'disk_available', 'disk_used', 'latency']:
-            
-            # Store the metric in Redis
-            redis.rpush(f"metric:{metric}:host:{host}", host_data[metric] if host_data["status"] else -1)
-            
-            # Keep only the recent values
-            if redis.llen(f"metric:{metric}:host:{host}") > window_size:
-                redis.lpop(f"metric:{metric}:host:{host}")
-
-async def fetch_metrics(endpoints: list, interval: int):
+async def scraper_loop(montor_dicts: Dict[str,List[str]], interval: int, window_size: int) -> None:
     
     # Create a session
     async with aiohttp.ClientSession() as session:
@@ -67,11 +68,11 @@ async def fetch_metrics(endpoints: list, interval: int):
             start_time = perf_counter()
             
             # Fetch metrics for each endpoint
-            fetch_tasks = [get_metrics(endpoint, session) for endpoint in endpoints]
-            results = await asyncio.gather(*fetch_tasks)
+            scrape_tasks = [scrape_container_metrics(monitor_host, container_names, window_size, session) for monitor_host, container_names in montor_dicts.items()]
+            await asyncio.gather(*scrape_tasks)
             
-            # Write the results to Redis
-            update_host_data(results, int(os.environ.get("SCRAPER_WINDOW_SIZE")))
+            # Publish redis message
+            await redis.publish("dashboard_metrics", "uploaded")
             
             # Wait for the next interval
             remaining_time = interval - (perf_counter() - start_time)
@@ -79,12 +80,24 @@ async def fetch_metrics(endpoints: list, interval: int):
                 await asyncio.sleep(remaining_time)
 
 # Connect to Redis
-redis = Redis(host=os.environ.get("DB_HOST"), port=os.environ.get("DB_PORT"), decode_responses=True)
+# redis = AsyncRedis(url=f"redis://{os.environ.get("DB_HOST")}:{os.environ.get("DB_PORT")} decode_responses=True)
+redis = AsyncRedis.from_url(url="redis://localhost:6379", decode_responses=True)
 
 # Run the scraper
+# asyncio.run(
+#     scraper_loop(
+#         os.environ.get("SCRAPER_ENDPOINTS").split(","),
+#         int(os.environ.get("SCRAPER_INTERVAL")),
+#         int(os.environ.get("SCRAPER_WINDOW_SIZE"))
+#     )
+# )
+
 asyncio.run(
-    fetch_metrics(
-        os.environ.get("SCRAPER_ENDPOINTS").split(","),
-        int(os.environ.get("SCRAPER_INTERVAL"))
+    scraper_loop(
+        {
+            "localhost:8080": ["endpoint8001", "endpoint8002"],
+        },
+        5,
+        10
     )
 )
