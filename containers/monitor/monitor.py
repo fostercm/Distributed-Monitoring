@@ -56,7 +56,18 @@ async def get_metrics(container_names: List[str] = Query(...)):
         try:
             container = client.containers.get(container_name)
         except docker.errors.NotFound:
-            return {"error": f"Container {container_name} not found"}
+            print(f"Container '{container_name}' not found.")
+            overall_metrics[container_name] = {
+                'cpu_absolute_usage': -1, 
+                'cpu_percent_usage': -1, 
+                'memory_absolute_usage': -1, 
+                'memory_percent_usage': -1, 
+                'network_input': -1, 
+                'network_output': -1, 
+                'disk_read': -1, 
+                'disk_write': -1
+            }
+            continue
         
         # Get container stats
         stats = container.stats(stream=False)
@@ -70,7 +81,7 @@ async def get_metrics(container_names: List[str] = Query(...)):
         # Combine metrics into a single dictionary
         overall_metrics[container_name] = {
             **cpu_stats,
-            **memory_stats
+            **memory_stats,
             **network_io,
             **disk_io,
         }
