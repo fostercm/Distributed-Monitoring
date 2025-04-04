@@ -1,6 +1,5 @@
 import docker
 from fastapi import FastAPI, Query
-from pydantic import BaseModel
 from typing import List
 
 # This script provides an API to fetch container metrics using Docker's API.
@@ -8,20 +7,6 @@ app = FastAPI()
 
 # Initialize Docker client
 client = docker.from_env()
-
-# Define the data model for container metrics
-class ContainerMetrics(BaseModel):
-    cpu_absolute_usage: float
-    cpu_percent_usage: float
-    
-    memory_absolute_usage: float
-    memory_percent_usage: float
-    
-    network_input: float
-    network_output: float
-    
-    disk_read: float
-    disk_write: float
 
 # Define metrics extraction functions
 def get_network_io(stats: dict) -> dict:
