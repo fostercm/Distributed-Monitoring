@@ -1,4 +1,5 @@
 import yaml
+import json
 import sys
 import os
 
@@ -25,48 +26,36 @@ def validate_field(config: dict, field: str, field_type: type, errors: list) -> 
 # Store config errors
 errors = []
 
-# Validate the database configuration
-if "Database" not in config:
-    errors.append("Error: 'Database' field not found in the configuration file")
-    
+# Validate the general configuration
+if "General" not in config:
+    errors.append("Error: 'General' field not found in the configuration file")
 else:
+    # Validate fields in the general configuration
+    general = config["General"]
+    validate_field(general, "Interval", int, errors)
+    validate_field(general, "Window Size", int, errors)
     
-    # Validate fields in the database configuration
-    database = config["Database"]
-    validate_field(database, "Host", str, errors)
-    validate_field(database, "Port", int, errors)
-    
-# Validate the scraper configuration
-if "Scraper" not in config:
-    errors.append("Error: 'Scraper' field not found in the configuration file")
-    
-else:
-    
-    # Validate fields in the scraper configuration
-    scraper = config["Scraper"]
-    validate_field(scraper, "Host", str, errors)
-    validate_field(scraper, "Endpoints", list, errors)
-    for field in ["Interval", "Port", "Window Size"]:
-        validate_field(scraper, field, int, errors)
-    
-    # Validate individual endpoints
-    if "Endpoints" in scraper:
-        for endpoint in scraper["Endpoints"]:
-            if not isinstance(endpoint, str):
-                errors.append("Error: Invalid endpoint configuration, requires a list of strings")
-                break
+    # Validate integer values
+    for field in ["Interval", "Window Size"]:
+        if field in general and general[field] < 1:
+            errors.append(f"Error: '{field}' must be a positive integer")
 
-# Validate the dashboard configuration
-if "Dashboard" not in config:
-    errors.append("Error: 'Dashboard' field not found in the configuration file")
+# Validate the container configuration
+if "Containers" not in config:
+    errors.append("Error: 'Containers' field not found in the configuration file")
 
+# Validate the port configuration
+if "Ports" not in config:
+    errors.append("Error: 'Ports' field not found in the configuration file")
 else:
-    
-    # Validate fields in the dashboard configuration
-    dashboard = config["Dashboard"]
-    validate_field(dashboard, "Host", str, errors)
-    for field in ["Interval", "Port", "Window Size"]:
-        validate_field(dashboard, field, int, errors)
+    # Validate fields in the port configuration
+    port = config["Ports"]
+    validate_field(port, "Database", int, errors)
+    validate_field(port, "Dashboard", int, errors)
+
+# Validate the host configuration
+if "Host" not in config:
+    errors.append("Error: 'Host' field not found in the configuration file")
         
 # Exit if errors are found
 if errors:
@@ -76,14 +65,9 @@ if errors:
 
 # If no errors are found, write the configuration to a .env file
 with open(".env", "w") as f:
-    f.write(f"DB_HOST={database['Host']}\n")
-    f.write(f"DB_PORT={database['Port']}\n")
-    f.write(f"SCRAPER_INTERVAL={scraper['Interval']}\n")
-    f.write(f"SCRAPER_ENDPOINTS={','.join(scraper['Endpoints'])}\n")
-    f.write(f"SCRAPER_PORT={scraper['Port']}\n")
-    f.write(f"SCRAPER_HOST={scraper['Host']}\n")
-    f.write(f"SCRAPER_WINDOW_SIZE={scraper['Window Size']}\n")
-    f.write(f"DASHBOARD_INTERVAL={dashboard['Interval']}\n")
-    f.write(f"DASHBOARD_PORT={dashboard['Port']}\n")
-    f.write(f"DASHBOARD_HOST={dashboard['Host']}\n")
-    f.write(f"DASHBOARD_WINDOW_SIZE={dashboard['Window Size']}\n")
+    f.write(f"INTERVAL={general['Interval']}\n")
+    f.write(f"WINDOW_SIZE={general['Window Size']}\n")
+    f.write(f"ENDPOINTS={json.dumps(config['Containers'])}\n")
+    f.write(f"DB_PORT={port['Database']}\n")
+    f.write(f"DASHBOARD_PORT={port['Dashboard']}\n")
+    f.write(f"HOST={config['Host']}\n")
