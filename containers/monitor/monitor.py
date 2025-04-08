@@ -55,8 +55,15 @@ async def get_metrics(container_names: List[str] = Query(...)):
         # Check if the container exists
         try:
             container = client.containers.get(container_name)
-        except docker.errors.NotFound:
-            print(f"Container '{container_name}' not found.")
+            
+            # Get container stats
+            stats = container.stats(stream=False)
+            
+            # If the container is not running, raise an exception
+            if len(stats['pids_stats']) == 0:
+                raise Exception("Container is not running")
+        except:
+            print(f"Container '{container_name}' not found or not active.")
             overall_metrics[container_name] = {
                 'cpu_absolute_usage': -1, 
                 'cpu_percent_usage': -1, 
@@ -68,9 +75,6 @@ async def get_metrics(container_names: List[str] = Query(...)):
                 'disk_write': -1
             }
             continue
-        
-        # Get container stats
-        stats = container.stats(stream=False)
 
         # Extract metrics
         network_io = get_network_io(stats)
