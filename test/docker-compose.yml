@@ -20,5 +20,6 @@ services:
       ENDPOINTS: ${ENDPOINTS}
       WINDOW_SIZE: ${WINDOW_SIZE}
       DB_PORT: ${DB_PORT}
+      HOST: ${HOST}
     ports:
       - "${DASHBOARD_PORT}:8501"

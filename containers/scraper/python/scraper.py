@@ -82,7 +82,6 @@ async def scraper_loop(montor_dicts: Dict[str,List[str]], interval: int, window_
 
 # Connect to Redis
 redis = AsyncRedis.from_url(url=f"redis://{os.environ.get("HOST")}:{os.environ.get("DB_PORT")}", decode_responses=True)
-# redis = AsyncRedis.from_url(url="redis://localhost:6379", decode_responses=True)
 
 # Run the scraper
 asyncio.run(
@@ -92,13 +91,3 @@ asyncio.run(
         int(os.environ.get("WINDOW_SIZE"))
     )
 )
-
-# asyncio.run(
-#     scraper_loop(
-#         {
-#             "localhost:8080": ["endpoint8001", "endpoint8002"],
-#         },
-#         5,
-#         10
-#     )
-# )

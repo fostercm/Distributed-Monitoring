@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
-import time
+import json
 
 # Define helper functions
 def get_data(host: str, container: str, metric: str) -> list:
@@ -18,21 +18,21 @@ def get_status(host: str, container: str) -> bool:
     return status != "-1"
 
 # Get environment variables
-# db_host = os.environ.get("DB_HOST")
-# db_port = os.environ.get("DB_PORT")
-# hosts = os.environ.get("SCRAPER_ENDPOINTS").split(",")
-# window_size = int(os.environ.get("DASHBOARD_WINDOW_SIZE"))
-# interval = int(os.environ.get("DASHBOARD_INTERVAL"))
+db_port = os.environ.get("DB_PORT")
+host = os.environ.get("HOST")
+endpoints = json.loads(os.environ.get("ENDPOINTS"))
+window_size = int(os.environ.get("WINDOW_SIZE"))
+interval = int(os.environ.get("INTERVAL"))
 
-db_host = "localhost"
-db_port = 6379
-hosts = {
-    "localhost:8080" : ['endpoint8001', 'endpoint8002'],
-}
-window_size = 10
+# host = "172.24.1.57"
+# db_port = 6379
+# endpoints = {
+#     "localhost:8080" : ['endpoint8001', 'endpoint8002'],
+# }
+# window_size = 10
 
 # Connect to Redis
-r = Redis(host=db_host, port=db_port, decode_responses=True)
+r = Redis.from_url(url=f"redis://{host}:{db_port}", decode_responses=True)
 pubsub = r.pubsub()
 pubsub.subscribe("dashboard_metrics")
 
@@ -41,13 +41,13 @@ st.title("Metrics Dashboard")
 st.sidebar.header("Select a Container")
 
 # Choose a container
-available_containers = [f"{host}/{container}" for host, containers in hosts.items() for container in containers]
+available_containers = [f"{host}/{container}" for host, containers in endpoints.items() for container in containers]
 selected_containers = st.sidebar.multiselect("Containers:", available_containers, default=available_containers)
 
 # Live updating
 status_placeholder = st.sidebar.empty()
 chart_placeholder = st.empty()
-fig, ax = plt.subplots(4,2, figsize=(15, 10))
+fig, ax = plt.subplots(5,2, figsize=(15, 30))
 
 # Define the metrics to be displayed
 metrics = [
@@ -70,7 +70,7 @@ while True:
     
             # Update the status
             status_placeholder.empty()
-            container_status = {(host, container) : get_status(host, container) for host, containers in hosts.items() for container in containers}
+            container_status = {(host, container) : get_status(host, container) for host, containers in endpoints.items() for container in containers}
             status_content = ""
             for (host, container), status in container_status.items():
                 color = "green" if status else "red"
@@ -92,6 +92,7 @@ while True:
                 
                 # Plot the relevant data
                 x, y = i//2, i%2
+                x += 1
                 ax[x][y].clear()
                 for container in selected_containers:
                     if container in df.columns:
@@ -101,7 +102,12 @@ while True:
                 ax[x][y].set_title(title)
                 ax[x][y].set_xticks([])
                 ax[x][y].set_ylabel(ylabel)
-                ax[x][y].legend()
+                
+                if i == 0:
+                    handles, labels = ax[x][y].get_legend_handles_labels()
+                    ax[0][0].legend(handles, labels, loc="center", bbox_to_anchor=(0.5, 0.5), fontsize="large")
+                    ax[0][0].axis("off")
+                
                     
             # Plot the data
             chart_placeholder.pyplot(fig)
