@@ -6,15 +6,24 @@ from typing import List, Dict
 from redis.asyncio import Redis as AsyncRedis
 from itertools import product
 import json
+from ping3 import ping
 
 async def write_to_redis(redis: AsyncRedis, metric: str, host: str, container_name: str, value: str, window_size: int) -> None:
     
-    # Store the metric in Redis
-    await redis.rpush(f"metric:{metric}:host:{host}:container:{container_name}", value)
-    
-    # Keep only the recent values
-    if await redis.llen(f"metric:{metric}:host:{host}:container:{container_name}") > window_size:
-        await redis.lpop(f"metric:{metric}:host:{host}:container:{container_name}")
+    if container_name != None:
+        # Store the metric in Redis
+        await redis.rpush(f"metric:{metric}:host:{host}:container:{container_name}", value)
+        
+        # Keep only the recent values
+        if await redis.llen(f"metric:{metric}:host:{host}:container:{container_name}") > window_size:
+            await redis.lpop(f"metric:{metric}:host:{host}:container:{container_name}")
+    else:
+        # Store the metric in Redis
+        await redis.rpush(f"metric:{metric}:host:{host}", value)
+        
+        # Keep only the recent values
+        if await redis.llen(f"metric:{metric}:host:{host}") > window_size:
+            await redis.lpop(f"metric:{metric}:host:{host}")
 
 async def scrape_container_metrics(monitor_host: str, container_names: List[str], window_size: int, session: aiohttp.ClientSession) -> dict:
     
@@ -57,6 +66,35 @@ async def scrape_container_metrics(monitor_host: str, container_names: List[str]
                 ]
     await asyncio.gather(*write_tasks)
 
+async def get_network_latency(monitor_host: str, window_size: int) -> float:
+    
+    # Get the latency
+    latencies = []
+    for _ in range(5):
+        try:
+            # Measure the latency
+            latency = ping(monitor_host.split(':')[0], timeout=0.1, unit='ms')
+            latencies.append(latency)
+        except Exception as e:
+            # If the request fails, append None
+            latencies.append(None)
+    
+    # If any request fails, set the latency to -1
+    if any(latency == None for latency in latencies):
+        latency = -1
+    else:
+        # Calculate the average latency
+        latency = sum(latencies) / len(latencies)
+    
+    # Store the latency in Redis
+    await write_to_redis(redis,
+                          "network_latency",
+                          monitor_host,
+                          None,
+                          latency,
+                          window_size
+                        )
+
 async def scraper_loop(montor_dicts: Dict[str,List[str]], interval: int, window_size: int) -> None:
     
     # Create a session
@@ -70,6 +108,7 @@ async def scraper_loop(montor_dicts: Dict[str,List[str]], interval: int, window_
             
             # Fetch metrics for each endpoint
             scrape_tasks = [scrape_container_metrics(monitor_host, container_names, window_size, session) for monitor_host, container_names in montor_dicts.items()]
+            scrape_tasks.extend([get_network_latency(monitor_host, window_size) for monitor_host in montor_dicts.keys()])
             await asyncio.gather(*scrape_tasks)
             
             # Publish redis message
