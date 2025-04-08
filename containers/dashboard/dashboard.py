@@ -14,7 +14,7 @@ def get_data(host: str, container: str, metric: str) -> list:
 
 def get_status(host: str, container: str) -> bool:
     # Fetch status from Redis
-    status = r.lrange(f"metric:cpu_absolute_usage:host:{host}:container:{container}", 0, 1)
+    status = r.lrange(f"metric:cpu_absolute_usage:host:{host}:container:{container}", -1, -1)[0]
     return status != "-1"
 
 # Get environment variables
@@ -23,13 +23,6 @@ host = os.environ.get("HOST")
 endpoints = json.loads(os.environ.get("ENDPOINTS"))
 window_size = int(os.environ.get("WINDOW_SIZE"))
 interval = int(os.environ.get("INTERVAL"))
-
-# host = "172.24.1.57"
-# db_port = 6379
-# endpoints = {
-#     "localhost:8080" : ['endpoint8001', 'endpoint8002'],
-# }
-# window_size = 10
 
 # Connect to Redis
 r = Redis.from_url(url=f"redis://{host}:{db_port}", decode_responses=True)
@@ -105,7 +98,7 @@ while True:
                 
                 if i == 0:
                     handles, labels = ax[x][y].get_legend_handles_labels()
-                    ax[0][0].legend(handles, labels, loc="center", bbox_to_anchor=(0.5, 0.5), fontsize="large")
+                    ax[0][0].legend(handles, [f"Host: {split[0]}    Container: {split[1]}" for split in [label.split("/") for label in labels]], loc="center", bbox_to_anchor=(0.5, 0.5), fontsize="large")
                     ax[0][0].axis("off")
                 
                     
