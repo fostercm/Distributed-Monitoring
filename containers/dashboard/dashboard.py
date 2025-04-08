@@ -45,7 +45,7 @@ st.title("Metrics Dashboard")
 st.sidebar.header("Select a Container")
 
 # Choose a container
-available_containers = [f"{host}/{container}" for host, containers in endpoints.items() for container in containers]
+available_containers = [f"{remove_port(host)}/{container}" for host, containers in endpoints.items() for container in containers]
 selected_containers = st.sidebar.multiselect("Containers:", available_containers, default=available_containers)
 
 # Live updating
@@ -102,7 +102,7 @@ while True:
                     data = get_data(host, container, metric)
                     
                     # Place the data in the DataFrame
-                    df[f"{host}/{container}"] = data
+                    df[f"{remove_port(host)}/{container}"] = data
                 
                 # Plot the relevant data
                 x, y = i//2, i%2
