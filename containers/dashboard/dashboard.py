@@ -12,10 +12,21 @@ def get_data(host: str, container: str, metric: str) -> list:
     data = r.lrange(f"metric:{metric}:host:{host}:container:{container}", 0, -1)
     return [float(i) if float(i) != -1 else np.nan for i in data]
 
+def get_latency(host: str) -> float:
+    # Fetch latency from Redis
+    latency = r.lrange(f"metric:network_latency:host:{host}", 0, -1)
+    return [float(i) if float(i) != -1 else np.nan for i in latency]
+
 def get_status(host: str, container: str) -> bool:
     # Fetch status from Redis
     status = r.lrange(f"metric:cpu_absolute_usage:host:{host}:container:{container}", -1, -1)[0]
     return status != "-1"
+
+def remove_port(host: str) -> str:
+    # Remove the port from the host
+    if ":" in host:
+        return host.split(":")[0]
+    return host
 
 # Get environment variables
 db_port = os.environ.get("DB_PORT")
@@ -67,10 +78,20 @@ while True:
             status_content = ""
             for (host, container), status in container_status.items():
                 color = "green" if status else "red"
-                status_content += f"<b style='color:{color};'>{host}/{container} is {'Active' if status else 'Inactive'}</b><br>"
+                status_content += f"<b style='color:{color};'>{remove_port(host)}/{container} is {'Active' if status else 'Inactive'}</b><br>"
             status_placeholder.markdown(status_content, unsafe_allow_html=True)
             
-            # Update the metrics
+            # Update the latency
+            for host in endpoints.keys():
+                latency = get_latency(host)
+                ax[0][1].clear()
+                ax[0][1].plot(latency, marker="o", linestyle="-", label=remove_port(host))
+            ax[0][1].set_title("Network Latency")
+            ax[0][1].set_ylabel("Latency (ms)")
+            ax[0][1].legend(loc="upper right")
+            ax[0][1].set_xticks([])
+            
+            # Update the other metrics
             for i,(metric,title,ylabel) in enumerate(metrics):
             
                 # Get new data
@@ -98,9 +119,8 @@ while True:
                 
                 if i == 0:
                     handles, labels = ax[x][y].get_legend_handles_labels()
-                    ax[0][0].legend(handles, [f"Host: {split[0]}    Container: {split[1]}" for split in [label.split("/") for label in labels]], loc="center", bbox_to_anchor=(0.5, 0.5), fontsize="large")
+                    ax[0][0].legend(handles, [f"Host: {remove_port(split[0])}    Container: {split[1]}" for split in [label.split("/") for label in labels]], loc="center", bbox_to_anchor=(0.5, 0.5), fontsize="large")
                     ax[0][0].axis("off")
-                
                     
             # Plot the data
             chart_placeholder.pyplot(fig)
