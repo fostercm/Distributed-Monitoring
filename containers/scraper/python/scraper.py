@@ -15,19 +15,25 @@ async def write_to_redis(redis: AsyncRedis, metric: str, host: str, container_na
         host = host.split(":")[0]
     
     if container_name != None:
+        # Get key
+        key = f"metric:{metric}:host:{host}:container:{container_name}"
+        
         # Store the metric in Redis
-        await redis.rpush(f"metric:{metric}:host:{host}:container:{container_name}", value)
+        await redis.rpush(key, value)
         
         # Keep only the recent values
-        if await redis.llen(f"metric:{metric}:host:{host}:container:{container_name}") > window_size:
-            await redis.lpop(f"metric:{metric}:host:{host}:container:{container_name}")
+        if await redis.llen(key) > window_size:
+            await redis.lpop(key)
     else:
+        # Get key
+        key = f"metric:{metric}:host:{host}"
+        
         # Store the metric in Redis
-        await redis.rpush(f"metric:{metric}:host:{host}", value)
+        await redis.rpush(key, value)
         
         # Keep only the recent values
-        if await redis.llen(f"metric:{metric}:host:{host}") > window_size:
-            await redis.lpop(f"metric:{metric}:host:{host}")
+        if await redis.llen(key) > window_size:
+            await redis.lpop(key)
 
 async def scrape_container_metrics(monitor_host: str, container_names: List[str], window_size: int, session: aiohttp.ClientSession) -> dict:
     
