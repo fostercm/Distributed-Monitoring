@@ -14,7 +14,7 @@ def get_network_io(stats: dict) -> dict:
     net_io = stats['networks']
     net_input = sum(interface['rx_bytes'] for interface in net_io.values())
     net_output = sum(interface['tx_bytes'] for interface in net_io.values())
-    return {'network_input': net_input, 'network_output': net_output}
+    return {'network_input': net_input / 1e6, 'network_output': net_output / 1e6}
 
 def get_disk_io(stats: dict) -> dict:
     """Extract disk I/O (MB, MB) from container stats."""
@@ -59,8 +59,9 @@ async def get_metrics(container_names: List[str] = Query(...)):
             # Get container stats
             stats = container.stats(stream=False)
             
-            # If the container is not running, raise an exception
-            if len(stats['pids_stats']) == 0:
+            # Check if container is running
+            status = container.status
+            if status != 'running':
                 raise Exception("Container is not running")
         except:
             print(f"Container '{container_name}' not found or not active.")
