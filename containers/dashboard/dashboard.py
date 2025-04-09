@@ -42,11 +42,19 @@ pubsub.subscribe("dashboard_metrics")
 
 # Streamlit UI
 st.title("Metrics Dashboard")
-st.sidebar.header("Select a Container")
 
 # Choose a container
+st.sidebar.header("Select a Container")
 available_containers = [f"{remove_port(host)}/{container}" for host, containers in endpoints.items() for container in containers]
 selected_containers = st.sidebar.multiselect("Containers:", available_containers, default=available_containers)
+
+# Choose a server
+st.sidebar.header("Select a Host")
+available_hosts = [remove_port(host) for host in endpoints.keys()]
+selected_hosts = st.sidebar.multiselect("Hosts:", available_hosts, default=available_hosts)
+
+# Display container status
+st.sidebar.header("Container Status")
 
 # Live updating
 status_placeholder = st.sidebar.empty()
@@ -68,24 +76,37 @@ metrics = [
 # Metrics update loop
 while True:
     
+    # Initialize variables
+    prev_status = None
+    
     # Listen for go-ahead signal from Redis
     for message in pubsub.listen():
         if message['type'] == 'message':
     
             # Update the status
-            status_placeholder.empty()
-            container_status = {(host, container) : get_status(host, container) for host, containers in endpoints.items() for container in containers}
-            status_content = ""
-            for (host, container), status in container_status.items():
-                color = "green" if status else "red"
-                status_content += f"<b style='color:{color};'>{remove_port(host)}/{container} is {'Active' if status else 'Inactive'}</b><br>"
-            status_placeholder.markdown(status_content, unsafe_allow_html=True)
+            # container_status = {(host, container) : get_status(host, container) for host, containers in endpoints.items() for container in containers}
+            container_status = {container : get_status(*container.split("/")) for container in selected_containers}
+            
+            # Check if the status has changed
+            if prev_status != container_status:
+                status_placeholder.empty()
+                status_content = ""
+                for container, status in container_status.items():
+                    color = "green" if status else "red"
+                    status_content += f"<b style='color:{color};'>{container} is {'Active' if status else 'Inactive'}</b><br>"
+                status_placeholder.markdown(status_content, unsafe_allow_html=True)
+            
+            # Store the previous status
+            prev_status = container_status
             
             # Update the latency
-            for host in endpoints.keys():
+            for host in selected_hosts:
+                # Fetch latency data
                 latency = get_latency(host)
                 ax[0][1].clear()
-                ax[0][1].plot(latency, marker="o", linestyle="-", label=remove_port(host))
+                ax[0][1].plot(latency, marker="o", linestyle="-", label=host)
+            
+            # Update plot
             ax[0][1].set_title("Network Latency")
             ax[0][1].set_ylabel("Latency (ms)")
             ax[0][1].legend(loc="upper right")
@@ -96,13 +117,13 @@ while True:
             
                 # Get new data
                 df = pd.DataFrame()
-                for (host, container) in container_status.keys():
+                for container in container_status.keys():
     
                     # Fetch data from Redis
-                    data = get_data(host, container, metric)
+                    data = get_data(*container.split("/"), metric)
                     
                     # Place the data in the DataFrame
-                    df[f"{remove_port(host)}/{container}"] = data
+                    df[f"{container}"] = data
                 
                 # Plot the relevant data
                 x, y = i//2, i%2
@@ -119,7 +140,7 @@ while True:
                 
                 if i == 0:
                     handles, labels = ax[x][y].get_legend_handles_labels()
-                    ax[0][0].legend(handles, [f"Host: {remove_port(split[0])}    Container: {split[1]}" for split in [label.split("/") for label in labels]], loc="center", bbox_to_anchor=(0.5, 0.5), fontsize="large")
+                    ax[0][0].legend(handles, [f"Host: {split[0]}    Container: {split[1]}" for split in [label.split("/") for label in labels]], loc="center", bbox_to_anchor=(0.5, 0.5), fontsize="large")
                     ax[0][0].axis("off")
                     
             # Plot the data

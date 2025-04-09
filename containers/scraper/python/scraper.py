@@ -10,6 +10,10 @@ from ping3 import ping
 
 async def write_to_redis(redis: AsyncRedis, metric: str, host: str, container_name: str, value: str, window_size: int) -> None:
     
+    # Remove port from host
+    if ":" in host:
+        host = host.split(":")[0]
+    
     if container_name != None:
         # Store the metric in Redis
         await redis.rpush(f"metric:{metric}:host:{host}:container:{container_name}", value)
