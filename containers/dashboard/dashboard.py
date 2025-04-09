@@ -6,39 +6,42 @@ import numpy as np
 import os
 import json
 
-# Define helper functions
-def get_data(host: str, container: str, metric: str) -> list:
-    # Fetch data from Redis
-    data = r.lrange(f"metric:{metric}:host:{host}:container:{container}", 0, -1)
-    return [float(i) if float(i) != -1 else np.nan for i in data]
+if "initialized" not in st.session_state:
+    st.session_state.initialized = True
 
-def get_latency(host: str) -> float:
-    # Fetch latency from Redis
-    latency = r.lrange(f"metric:network_latency:host:{host}", 0, -1)
-    return [float(i) if float(i) != -1 else np.nan for i in latency]
+    # Define helper functions
+    def get_data(host: str, container: str, metric: str) -> list:
+        # Fetch data from Redis
+        data = r.lrange(f"metric:{metric}:host:{host}:container:{container}", 0, -1)
+        return [float(i) if float(i) != -1 else np.nan for i in data]
 
-def get_status(host: str, container: str) -> bool:
-    # Fetch status from Redis
-    status = r.lrange(f"metric:cpu_absolute_usage:host:{host}:container:{container}", -1, -1)[0]
-    return status != "-1"
+    def get_latency(host: str) -> float:
+        # Fetch latency from Redis
+        latency = r.lrange(f"metric:network_latency:host:{host}", 0, -1)
+        return [float(i) if float(i) != -1 else np.nan for i in latency]
 
-def remove_port(host: str) -> str:
-    # Remove the port from the host
-    if ":" in host:
-        return host.split(":")[0]
-    return host
+    def get_status(host: str, container: str) -> bool:
+        # Fetch status from Redis
+        status = r.lrange(f"metric:cpu_absolute_usage:host:{host}:container:{container}", -1, -1)[0]
+        return status != "-1"
 
-# Get environment variables
-db_port = os.environ.get("DB_PORT")
-host = os.environ.get("HOST")
-endpoints = json.loads(os.environ.get("ENDPOINTS"))
-window_size = int(os.environ.get("WINDOW_SIZE"))
-interval = int(os.environ.get("INTERVAL"))
+    def remove_port(host: str) -> str:
+        # Remove the port from the host
+        if ":" in host:
+            return host.split(":")[0]
+        return host
 
-# Connect to Redis
-r = Redis.from_url(url=f"redis://{host}:{db_port}", decode_responses=True)
-pubsub = r.pubsub()
-pubsub.subscribe("dashboard_metrics")
+    # Get environment variables
+    db_port = os.environ.get("DB_PORT")
+    host = os.environ.get("HOST")
+    endpoints = json.loads(os.environ.get("ENDPOINTS"))
+    window_size = int(os.environ.get("WINDOW_SIZE"))
+    interval = int(os.environ.get("INTERVAL"))
+
+    # Connect to Redis
+    r = Redis.from_url(url=f"redis://{host}:{db_port}", decode_responses=True)
+    pubsub = r.pubsub()
+    pubsub.subscribe("dashboard_metrics")
 
 # Streamlit UI
 st.title("Metrics Dashboard")
