@@ -43,7 +43,10 @@ else:
 # Validate the container configuration
 if "Containers" not in config:
     errors.append("Error: 'Containers' field not found in the configuration file")
-
+    for host, containers in config["Containers"].items():
+        config["Containers"][f'\"{host}\"'] = [f'\"{container}\"' for container in containers]
+        del config["Containers"][host]
+        
 # Validate the port configuration
 if "Ports" not in config:
     errors.append("Error: 'Ports' field not found in the configuration file")
