@@ -23,7 +23,7 @@ if "initialized" not in st.session_state:
     def get_status(host: str, container: str) -> bool:
         # Fetch status from Redis
         status = r.lrange(f"metric:cpu_absolute_usage:host:{host}:container:{container}", -1, -1)[0]
-        return status != "-1"
+        return status[:2] != "-1"
 
     def remove_port(host: str) -> str:
         # Remove the port from the host
