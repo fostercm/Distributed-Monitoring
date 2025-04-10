@@ -1,5 +1,5 @@
 FROM scratch
 
-COPY scraper .
+COPY scraper.bin .
 
-CMD ["./scraper"]
+CMD ["./scraper.bin"]

@@ -6,7 +6,7 @@ docker build -t python_scraper .
 
 # Go scraper
 cd ../go
-CGO_ENABLED=0 go build -o scraper
+CGO_ENABLED=0 go build -o scraper.bin
 docker build -t go_scraper .
 
 # Dashboard
@@ -23,7 +23,7 @@ docker build -t python_monitor .
 
 # Go monitor
 cd ../go
-CGO_ENABLED=0 go build -o monitor
+CGO_ENABLED=0 go build -o monitor.bin
 docker build -t go_monitor .
 
 # Return to the original directory
