@@ -29,7 +29,6 @@ def remove_port(host: str) -> str:
     return host
 
 # Get environment variables
-print(json.loads(os.environ.get("ENDPOINTS")))
 db_port = os.environ.get("DB_PORT")
 host = os.environ.get("HOST")
 endpoints = json.loads(os.environ.get("ENDPOINTS"))
@@ -105,7 +104,7 @@ while True:
                 # Fetch latency data
                 latency = get_latency(host)
                 ax[0][1].clear()
-                ax[0][1].plot(latency, marker="o", linestyle="-", label=host)
+                ax[0][1].plot(latency, marker="o", linestyle="-", label=host, markersize=1)
             
             # Update plot
             ax[0][1].set_title("Network Latency")
@@ -133,7 +132,7 @@ while True:
                 for container in selected_containers:
                     if container in df.columns:
                         # Plot the data
-                        ax[x][y].plot(df[container], marker="o", linestyle="-", label=container)
+                        ax[x][y].plot(df[container], marker="o", linestyle="-", label=container, markersize=1)
                 
                 ax[x][y].set_title(title)
                 ax[x][y].set_xticks([])
