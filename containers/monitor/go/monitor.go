@@ -109,7 +109,7 @@ func getNetworkIO(stats map[string]any) (float64, float64) {
 	}
 
 	// Convert bytes to megabytes
-	return float64(networkInput / 1e6), float64(networkOutput / 1e6)
+	return float64(networkInput) / 1e6, float64(networkOutput) / 1e6
 }
 
 func getDiskIO(stats map[string]any) (float64, float64) {
