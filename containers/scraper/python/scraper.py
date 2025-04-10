@@ -105,7 +105,7 @@ async def get_network_latency(monitor_host: str, window_size: int) -> float:
                           window_size
                         )
 
-async def scraper_loop(montor_dicts: Dict[str,List[str]], interval: int, window_size: int) -> None:
+async def scraper_loop(monitor_dicts: Dict[str,List[str]], interval: int, window_size: int) -> None:
     
     # Create a session
     async with aiohttp.ClientSession() as session:
@@ -117,8 +117,8 @@ async def scraper_loop(montor_dicts: Dict[str,List[str]], interval: int, window_
             start_time = perf_counter()
             
             # Fetch metrics for each endpoint
-            scrape_tasks = [scrape_container_metrics(monitor_host, container_names, window_size, session) for monitor_host, container_names in montor_dicts.items()]
-            scrape_tasks.extend([get_network_latency(monitor_host, window_size) for monitor_host in montor_dicts.keys()])
+            scrape_tasks = [scrape_container_metrics(monitor_host, container_names, window_size, session) for monitor_host, container_names in monitor_dicts.items()]
+            scrape_tasks.extend([get_network_latency(monitor_host, window_size) for monitor_host in monitor_dicts.keys()])
             await asyncio.gather(*scrape_tasks)
             
             # Publish redis message
