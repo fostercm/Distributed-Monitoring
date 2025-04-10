@@ -5,7 +5,7 @@ services:
       - "${DB_PORT}:${DB_PORT}"
     
   scraper:
-    image: scraper:latest
+    image: go_scraper:latest
     environment:
       INTERVAL: ${INTERVAL}
       ENDPOINTS: ${ENDPOINTS}
