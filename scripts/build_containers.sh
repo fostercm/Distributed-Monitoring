@@ -13,12 +13,17 @@ docker build -t go_scraper .
 cd ../../dashboard
 docker build -t dashboard .
 
-# Endpoint
-cd ../endpoint
-docker build -t endpoint .
+# Python endpoint
+cd ../endpoint/python
+docker build -t python_endpoint .
+
+# Go endpoint
+cd ../go
+CGO_ENABLED=0 go build -o endpoint.bin
+docker build -t go_endpoint .
 
 # Python monitor
-cd ../monitor/python
+cd ../../monitor/python
 docker build -t python_monitor .
 
 # Go monitor
