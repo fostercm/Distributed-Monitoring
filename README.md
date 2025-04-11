@@ -86,7 +86,6 @@ This project makes use of:
 | Endpoint  | 1,590 MB               | 200 MB                  | 17 MB           | 87.4 %                  | 98.9 %                   |
 | Dashboard | 2,100 MB               | 815 MB                  | N/A             | 61.2 %                  | N/A                      |
 
-[Image Size Comparison](figs/Docker_Image_Size_Comparison.pdf)
 
 ## Usage
 
