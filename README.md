@@ -113,4 +113,7 @@ This project makes use of:
 **monitor_launch.sh:** Launch the monitor container for a system
 
 **startup.sh:** Process the config to set environment variables and launch the containers with docker-compose
-   
+
+## License
+
+Distributed under the MIT license, see `LICENSE` for more details.
