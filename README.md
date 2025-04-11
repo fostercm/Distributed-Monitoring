@@ -17,7 +17,7 @@ This project provides a production-ready, resource-efficient monitoring solution
 
 ## System Architecture
 
-<!-- Add your architecture overview diagram or explanation here -->
+<img src="figs/Architecture_Diagram.png" width="1000">
 
 ---
 
