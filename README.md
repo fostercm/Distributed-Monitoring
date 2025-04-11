@@ -79,10 +79,10 @@ Care was taken (especially for the python containers) to reduce image size and i
 
 | Component | Original Size (Python) | Optimized Size (Python) | Final Size (Go) | Size Reduction (Python) | Size Reduction (Overall) |
 |-----------|------------------------|-------------------------|-----------------|-------------------------|--------------------------|
-| Scraper   | 1,510 MB               | 107 MB                  | 14 MB           | 92.9%                   | 99.1%                    |
-| Monitor   | 1,510 MB               | 109 MB                  | 20 MB           | 92.8%                   | 98.7%                    |
-| Dashboard | 943 MB                 | 815 MB                  | N/A             | 13.6%                   | N/A                      |
-| Endpoint  | 1,590 MB               | 200 MB                  | N/A             | 87.4%                   | N/A                      |
+| Scraper   | 1,510 MB               | 107 MB                  | 14 MB           | 92.9 %                  | 99.1 %                   |
+| Monitor   | 1,510 MB               | 109 MB                  | 20 MB           | 92.8 %                  | 98.7 %                   |
+| Endpoint  | 1,590 MB               | 200 MB                  | 17 MB           | 87.4 %                  | 98.9 %                   |
+| Dashboard | 943 MB                 | 815 MB                  | N/A             | 13.6 %                  | N/A                      |
 
 ## Usage
 
