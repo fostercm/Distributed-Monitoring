@@ -132,6 +132,9 @@ async def scraper_loop(monitor_dicts: Dict[str,List[str]], interval: int, window
 # Connect to Redis
 redis = AsyncRedis.from_url(url=f"redis://{os.environ.get("HOST")}:{os.environ.get("DB_PORT")}", decode_responses=True)
 
+# Clear the Redis database
+redis.flushdb()
+
 # Run the scraper
 asyncio.run(
     scraper_loop(

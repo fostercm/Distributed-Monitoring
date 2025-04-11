@@ -156,10 +156,17 @@ func main() {
 	})
 	defer redisClient.Close()
 
+	// Clear the Redis database
+	err := redisClient.FlushDB(ctx).Err()
+	if err != nil {
+		fmt.Println("Error flushing Redis database:", err)
+		return
+	}
+
 	// Get the hosts and endpoints
 	rawMonitorDict := os.Getenv("ENDPOINTS")
 	var monitorDict map[string][]string
-	err := json.Unmarshal([]byte(rawMonitorDict), &monitorDict)
+	err = json.Unmarshal([]byte(rawMonitorDict), &monitorDict)
 	if err != nil {
 		fmt.Println("Error parsing ENDPOINTS:", err)
 		return
