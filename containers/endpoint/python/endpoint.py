@@ -8,7 +8,7 @@ async def root():
     """Root endpoint."""
     return {"message": "Sample Container API"}
 
-@app.get("/compute:{a}:{b}:{c}")
+@app.get("/compute")
 async def compute(a: int, b: int, c: int):
     """Compute random numbers."""
     # Generate random arrays based on the input parameters
