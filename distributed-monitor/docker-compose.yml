@@ -2,7 +2,7 @@ services:
   redis:
     image: redis:latest
     ports:
-      - "${DB_PORT}:${DB_PORT}"
+      - "${DB_PORT}:6379"
     
   scraper:
     image: go_scraper:latest
