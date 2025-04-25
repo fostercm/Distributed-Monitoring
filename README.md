@@ -21,6 +21,12 @@ This project provides a production-ready, resource-efficient monitoring solution
 
 ---
 
+## Dashboard Example
+
+<img src="figs/Dashboard_Example.png" width="2000">
+
+---
+
 ## Components
 
 ### Monitor
