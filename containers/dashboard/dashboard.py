@@ -6,6 +6,9 @@ import numpy as np
 import os
 import json
 
+# Set page config
+st.set_page_config(layout="wide")
+
 # Define helper functions
 def get_data(host: str, container: str, metric: str) -> list:
     # Fetch data from Redis
@@ -59,7 +62,7 @@ st.sidebar.header("Container Status")
 # Live updating
 status_placeholder = st.sidebar.empty()
 chart_placeholder = st.empty()
-fig, ax = plt.subplots(5,2, figsize=(15, 30))
+fig, ax = plt.subplots(2,5, figsize=(30, 10))
 
 # Define the metrics to be displayed
 metrics = [
@@ -84,7 +87,6 @@ while True:
         if message['type'] == 'message':
     
             # Update the status
-            # container_status = {(host, container) : get_status(host, container) for host, containers in endpoints.items() for container in containers}
             container_status = {container : get_status(*container.split("/")) for container in selected_containers}
             
             # Check if the status has changed
@@ -103,14 +105,14 @@ while True:
             for host in selected_hosts:
                 # Fetch latency data
                 latency = get_latency(host)
-                ax[0][1].clear()
-                ax[0][1].plot(latency, marker="o", linestyle="-", label=host, markersize=1)
+                ax[1][0].clear()
+                ax[1][0].plot(latency, marker="o", linestyle="-", label=host, markersize=1)
             
             # Update plot
-            ax[0][1].set_title("Network Latency")
-            ax[0][1].set_ylabel("Latency (ms)")
-            ax[0][1].legend(loc="upper right")
-            ax[0][1].set_xticks([])
+            ax[1][0].set_title("Network Latency")
+            ax[1][0].set_ylabel("Latency (ms)")
+            ax[1][0].legend(loc="upper right")
+            ax[1][0].set_xticks([])
             
             # Update the other metrics
             for i,(metric,title,ylabel) in enumerate(metrics):
@@ -126,8 +128,8 @@ while True:
                     df[f"{container}"] = data
                 
                 # Plot the relevant data
-                x, y = i//2, i%2
-                x += 1
+                x, y = i%2, i//2
+                y += 1
                 ax[x][y].clear()
                 for container in selected_containers:
                     if container in df.columns:
